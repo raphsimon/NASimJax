@@ -8,9 +8,8 @@ and vectorization.
 from nasimjax.envs.environment_base import Environment, EnvState, EnvParams
 from nasimjax.envs.common import NASimJaxEnvState, NASimJaxEnvParams
 from nasimjax.envs.environment import NASimEnvJAX
-from nasimjax.envs.generated_environment import GeneratedNASimEnvJAX
+from nasimjax.envs.generated_environment import ProcGenNASimJaxEnv
 from nasimjax.envs.wrappers import AugmentedObservationsWrapper
-from nasimjax.envs.gen_env_pool import GenEnvPool
 from nasimjax.envs.network_generator import (
     Level,
     get_connected_subnets,
@@ -38,7 +37,6 @@ from nasimjax.envs.utils import (
     AccessLevel,
     ActionType,
 )
-from nasimjax.envs.mutators import make_level_mutator
 
 __all__ = [
     # Base classes
@@ -49,9 +47,7 @@ __all__ = [
     "NASimEnvJAX",
     "NASimJaxEnvState",
     "NASimJaxEnvParams",
-    "GeneratedNASimEnvJAX",
-    # Environment pooling
-    "GenEnvPool",
+    "ProcGenNASimJaxEnv",
     # Network generation
     "Level",
     "get_connected_subnets",
@@ -77,6 +73,4 @@ __all__ = [
     # Utility classes and functions
     "AccessLevel",
     "ActionType",
-    # Mutators
-    "make_level_mutator",
 ]

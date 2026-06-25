@@ -1,3 +1,15 @@
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is derived from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/benchmark/medium.yaml.
+#
+# In NASim, the starting position of the attacker, the Internet, is
+# only symbolically present in the environment. Added host (0, 0) to
+# make it part of the network and put it on its own subnet. It's
+# required for NASimJax's JAX-based state encoding.
+
 # A medium standard (one public subnet) network configuration
 #
 # 6 subnets

@@ -12,15 +12,14 @@ modules are organised into a small number of layers:
 | Action system | [`action.py`](action.md) | `ActionData`, `ActionResult`, flat action spaces. |
 | Transition | [`transition_logic.py`](transition_logic.md) | Pure function that applies one action to the hosts. |
 | Observation | [`observation_function.py`](observation_function.md) | Partial-observability masking rules. |
-| Generation | [`network_generator.py`](network_generator.md), [`gen_env_pool.py`](gen_env_pool.md) | Procedural network generation + pooling. |
-| Level mutators | [`mutators.py`](mutators.md) | Atomic edits to a `Level` for ACCEL-style curricula. |
+| Generation | [`network_generator.py`](network_generator.md) | Procedural network generation. |
 | Wrappers | [`wrappers.py`](wrappers.md) | Gymnax-style wrappers (e.g. observation augmentation). |
 | Rendering | [`renderer.py`](renderer.md) | Pretty-printing of state/observation for debugging. |
-| Utilities | [`utils.py`](utils.md) | Enums (`ActionType`, `AccessLevel`), graph helpers. |
+| Utilities | [`utils.py`](utils.md) | Enums (`ActionType`, `AccessLevel`) and UED rollout-stat helpers. |
 
 ## Functional programming contract
 
-NASimJAX follows the rules imposed by `jax.jit`:
+NASimJax follows the rules imposed by `jax.jit`:
 
 1. Every "hot" function is a **pure function** of its inputs — no Python side
    effects, no in-place mutation.

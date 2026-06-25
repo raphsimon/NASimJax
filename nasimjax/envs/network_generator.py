@@ -681,33 +681,3 @@ def make_level_mutator_minimax(
     max_num_edits: int,
 ) -> Callable[[chex.PRNGKey, Level, int], Level]:
     raise NotImplementedError
-
-
-if __name__ == "__main__":
-    key = jax.random.PRNGKey(6)
-
-    key, _ = jax.random.split(key)
-    hosts, network_rules, num_active, _ = generate(
-        key,
-        num_hosts=30,
-        num_subnets=8,
-        num_processes=3,
-        num_services=3,
-        num_os=2,
-        topology_density=0.2,
-        service_density=0.7,
-        process_density=0.7,
-        sensitive_density=0.1,
-        secure_topology=False,
-    )
-    topology = network_rules[:, :, 0]
-
-    (
-        jnp.zeros(shape=(8,), dtype=jnp.uint8).at[0].set(1) @ topology
-    ) @ topology @ topology @ topology
-
-    print(hosts.sensitive)
-    print(num_active)
-    print(jnp.argmax(hosts.subnet_address, axis=1))
-    print(network_rules[:, :, 0])
-    print(hosts.reachable)

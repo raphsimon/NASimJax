@@ -1,3 +1,15 @@
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is derived from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/benchmark/medium-multi-side.yaml.
+#
+# In NASim, the starting position of the attacker, the Internet, is
+# only symbolically present in the environment. Added host (0, 0) to
+# make it part of the network and put it on its own subnet. It's
+# required for NASimJax's JAX-based state encoding.
+
 # A WAN which has multiple 3 remote sites (subnets) connected to the main site
 # sensitive hosts:
 # 1) a server in server subnet on the main site,
@@ -27,7 +39,7 @@
 #     -> (e_http, (3, 1)) -> (e_ssh, (3, 4)) -> (pe_tomcat, (3, 4))
 #  Score = 200 - (2 + 3 + 2 + 3) = 190
 #
-subnets: [2, 2, 6, 2, 2, 2]
+subnets: [1, 2, 2, 6, 2, 2, 2]
 topology: [[ 1, 1, 0, 0, 1, 1, 1],    # 0 - internet
            [ 1, 1, 1, 1, 0, 0, 0],    # 1 - MS-DMZ
            [ 0, 1, 1, 1, 1, 1, 1],    # 2 - MS-Server
@@ -106,6 +118,10 @@ os_scan_cost: 1
 subnet_scan_cost: 1
 process_scan_cost: 1
 host_configurations:
+  (0, 0):
+    os: linux
+    services: [ssh]
+    processes: []
   (1, 0):
     os: linux
     services: [ssh]

@@ -105,8 +105,7 @@ def get_observation(
             return HostVectorBatched(
                 subnet_address=action_result.discovered[:, jnp.newaxis]
                 * state.subnet_address,
-                reachable=state.reachable
-                * action_result.discovered,  # TODO: Check whether this is right.
+                reachable=state.reachable * action_result.discovered,
                 discovered=state.discovered
                 * action_result.discovered,  # Reveal discovered for all discovered hosts
                 sensitive=apply_mask(state.sensitive, preserve=False),

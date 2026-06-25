@@ -1,3 +1,10 @@
+  # Copyright (c) 2018 Jonathon Schwartz (NASim).
+  # Licensed under the MIT License. See LICENSE-NASIM in the project root.
+  #
+  # This file is included unmodified from NASim
+  # (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+  # file nasim/scenarios/loader.py.    
+
 """This module contains functionality for loading network scenarios from yaml
 files.
 """
@@ -617,19 +624,4 @@ class ScenarioLoader:
             )
 
         self.step_limit = step_limit
-
-
-if __name__ == "__main__":
-    import os
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-
-    print("Dir path:", dir_path)
-
-    scenario_path = dir_path + "/benchmark/small.yaml"
-
-    print("Scenario path:", scenario_path)
-
-    loader = ScenarioLoader()
-    scenario = loader.load(file_path=scenario_path)
 

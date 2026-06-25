@@ -16,6 +16,8 @@
 # 5343613, file purejaxrl/ppo.py.
 #
 # Notable modifications:
+#   - Added action masking support for NASimJax environments
+#   - Added MaskEncoder class for efficient action mask encoding/decoding
 #   - Added hyperparameter sweep functionality with W&B
 #   - NASimJax environment setup
 #   - Parameterized network architecture and training hyperparameters
@@ -27,6 +29,7 @@ import copy
 import jax
 import jax.numpy as jnp
 import numpy as np
+from functools import partial
 
 import optax
 import flax.linen as nn
@@ -41,10 +44,69 @@ from omegaconf import OmegaConf
 
 # Local imports
 from agents.wrappers import LogWrapper
-from nasimjax.envs import NASimEnvJAX, GeneratedNASimEnvJAX
+from nasimjax.envs import ProcGenNASimJaxEnv
 from nasimjax.envs.wrappers import AugmentedObservationsWrapper, NormalizeRewardWrapper
-from nasimjax.scenarios import make_benchmark_scenario
 from nasimjax.envs.common import NASimJaxEnvParams
+
+
+class MaskEncoder:
+    def __init__(self, total_actions: int, chunk_size: int = 31):
+        """
+        Encoder/decoder for boolean action masks using bit packing.
+
+        Parameters:
+            total_actions: Total number of actions in the flat action space
+            chunk_size: Number of boolean values packed into each uint32 chunk
+        """
+        self.total_actions = total_actions
+        self.chunk_size = chunk_size
+        # Pre-calculate at init time (compile-time constants)
+        self.n_chunks = (total_actions + chunk_size - 1) // chunk_size
+        self.padded_size = self.n_chunks * chunk_size
+        self.powers = 2 ** jnp.arange(chunk_size)
+
+    @jax.named_scope("encode_mask")
+    @partial(jax.jit, static_argnames=("self",))
+    def encode(self, mask: jnp.ndarray) -> jnp.ndarray:
+        # Pad to fixed size (padded_size is compile-time constant)
+        padded = jnp.zeros(self.padded_size, dtype=jnp.bool_)
+        padded = padded.at[: self.total_actions].set(mask)
+
+        # Reshape and pack
+        chunks = padded.reshape(self.n_chunks, self.chunk_size)
+        encoded = jnp.sum(chunks * self.powers[None, :], axis=1)
+        return encoded.astype(jnp.uint32)
+
+    @jax.named_scope("decode_mask")
+    @partial(jax.jit, static_argnames=("self",))
+    def decode(self, encoded: jnp.ndarray) -> jnp.ndarray:
+        # Vectorized bit extraction
+        bit_indices = jnp.arange(self.chunk_size)[None, :]
+        chunks = (encoded[:, None] >> bit_indices) & 1
+        # Flatten and trim to original size
+        flattened = chunks.flatten().astype(bool)
+        return flattened[: self.total_actions]
+
+
+class MaskedCategorical(distrax.Categorical):
+    """Categorical distribution with action masking support."""
+
+    def __init__(self, logits=None, probs=None, mask=None):
+        if mask is not None:
+            # Apply mask: set invalid actions to very negative logits
+            if logits is not None:
+                masked_logits = jnp.where(mask, logits, -1e8)
+                super().__init__(logits=masked_logits)
+            elif probs is not None:
+                masked_probs = jnp.where(mask, probs, 0.0)
+                masked_probs = masked_probs / jnp.sum(
+                    masked_probs, axis=-1, keepdims=True
+                )
+                super().__init__(probs=masked_probs)
+        else:
+            super().__init__(logits=logits, probs=probs)
+
+        self.mask = mask
 
 
 class ActorCritic(nn.Module):
@@ -53,7 +115,7 @@ class ActorCritic(nn.Module):
     activation: str = "tanh"
 
     @nn.compact
-    def __call__(self, x):
+    def __call__(self, x, action_mask=None):
         if self.activation == "relu":
             activation = nn.relu
         else:
@@ -76,7 +138,7 @@ class ActorCritic(nn.Module):
             self.action_dim, kernel_init=orthogonal(0.01), bias_init=constant(0.0)
         )(actor_mean)
 
-        pi = distrax.Categorical(logits=actor_mean)
+        pi = MaskedCategorical(logits=actor_mean, mask=action_mask)
 
         critic = nn.Dense(
             self.config["LAYER_SIZE"],
@@ -105,6 +167,7 @@ class Transition(NamedTuple):
     log_prob: jnp.ndarray
     obs: jnp.ndarray
     info: jnp.ndarray
+    encoded_action_mask: jnp.ndarray
 
 
 def make_train(config):
@@ -132,7 +195,7 @@ def make_train(config):
             sensitive_density=config["ENV_KWARGS"]["sensitive_density"],
             step_limit=config["ENV_KWARGS"]["step_limit"],
         )
-        basic_env = GeneratedNASimEnvJAX(
+        basic_env = ProcGenNASimJaxEnv(
             key=jax.random.key(config["SEED"]),
             params=train_env_params,
         )
@@ -142,20 +205,49 @@ def make_train(config):
         if config["NORMALIZE_REWARD"]:
             basic_env = NormalizeRewardWrapper(basic_env)
     elif "nasimjax" in config["ENV_NAME"].lower():
-        scenario_name = config["ENV_NAME"].split("-")[-1]
-        scenario = make_benchmark_scenario(scenario_name.lower())
-
-        # Create pure JAX environment
-        basic_env = NASimEnvJAX(scenario, fully_obs=config["FULLY_OBS"])
-        env_params = basic_env.default_params
-        if config["AUG_OBS"]:
-            basic_env = AugmentedObservationsWrapper(basic_env)
-        if config["NORMALIZE_REWARD"]:
-            basic_env = NormalizeRewardWrapper(basic_env)
+        assert False, (
+            f"Action masking is not compatible with NASim benchmark scenarios "
+            f"(got ENV_NAME={config['ENV_NAME']!r}). The action space is "
+            f"scenario-specific for these, so masks cannot be constructed "
+            f"generically. Use `agents.ppo` for benchmark scenarios, or pick "
+            f"a procedurally generated config (e.g. `+envs=16-hosts-gen`)."
+        )
     else:
         basic_env, env_params = gymnax.make(config["ENV_NAME"])
 
     env = LogWrapper(basic_env)
+    mask_encoder = MaskEncoder(total_actions=env.action_space(env_params).n)
+
+    def get_inner_state(state):
+        """Recursively unwrap the environment state until we hit the base NASimJax state."""
+        s = state
+        while not hasattr(s, "hosts"):
+            s = s.env_state
+        return s
+
+    def get_action_mask(state):
+        # Use the helper to safely unwrap regardless of which env passed the state
+        inner = get_inner_state(state)
+
+        host_os = inner.hosts.os
+        host_services = inner.hosts.services
+        host_processes = inner.hosts.processes
+
+        host_mask = jnp.logical_and(inner.hosts.reachable, inner.hosts.discovered)
+
+        H = host_os.shape[0]
+
+        exploit = (host_services[:, :, None] * host_os[:, None, :]).reshape(H, -1)
+        privesc = (host_processes[:, :, None] * host_os[:, None, :]).reshape(H, -1)
+
+        global_actions = jnp.ones((H, 4), dtype=exploit.dtype)
+
+        action_mask = jnp.concatenate([global_actions, exploit, privesc], axis=1)
+        action_mask = action_mask * host_mask[:, None]
+        action_mask = action_mask.flatten()
+
+        encoded_action_mask = mask_encoder.encode(action_mask)
+        return action_mask, encoded_action_mask
 
     def linear_schedule(count):
         frac = (
@@ -202,9 +294,13 @@ def make_train(config):
             def _env_step(runner_state, unused):
                 train_state, env_state, last_obs, rng = runner_state
 
+                action_masks, encoded_mask = jax.vmap(get_action_mask)(env_state)
+
                 # SELECT ACTION
                 rng, _rng = jax.random.split(rng)
-                pi, value = network.apply(train_state.params, last_obs)
+                pi, value = network.apply(
+                    train_state.params, last_obs, action_mask=action_masks
+                )
                 action = pi.sample(seed=_rng)
                 log_prob = pi.log_prob(action)
 
@@ -215,7 +311,7 @@ def make_train(config):
                     env.step, in_axes=(0, 0, 0, None)
                 )(rng_step, env_state, action, env_params)
                 transition = Transition(
-                    done, action, value, reward, log_prob, last_obs, info
+                    done, action, value, reward, log_prob, last_obs, info, encoded_mask
                 )
                 runner_state = (train_state, env_state, obsv, rng)
                 return runner_state, transition
@@ -226,7 +322,8 @@ def make_train(config):
 
             # CALCULATE ADVANTAGE
             train_state, env_state, last_obs, rng = runner_state
-            _, last_val = network.apply(train_state.params, last_obs)
+            last_action_masks, _ = jax.vmap(get_action_mask)(env_state)
+            _, last_val = network.apply(train_state.params, last_obs, last_action_masks)
 
             def _calculate_gae(traj_batch, last_val):
                 def _get_advantages(gae_and_next_value, transition):
@@ -260,8 +357,14 @@ def make_train(config):
                     traj_batch, advantages, targets = batch_info
 
                     def _loss_fn(params, traj_batch, gae, targets):
+                        action_masks = jax.vmap(mask_encoder.decode)(
+                            traj_batch.encoded_action_mask
+                        )
+
                         # RERUN NETWORK
-                        pi, value = network.apply(params, traj_batch.obs)
+                        pi, value = network.apply(
+                            params, traj_batch.obs, action_mask=action_masks
+                        )
                         log_prob = pi.log_prob(traj_batch.action)
 
                         # CALCULATE VALUE LOSS
@@ -377,12 +480,8 @@ def make_train(config):
 def single_run(config):
     config = {**config, **config["alg"], **config["envs"]}
 
-    alg_name = config.get("ALG_NAME", "ppo")
+    alg_name = config.get("ALG_NAME", "ppo_masked")
     env_name = config["ENV_NAME"]
-    if "gen" in env_name:
-        pool_size = config["ENV_KWARGS"]["env_pool_size"]
-    else:
-        pool_size = ""
 
     wandb.init(
         entity=config["ENTITY"],
@@ -394,7 +493,7 @@ def single_run(config):
         ],
         name=config.get(
             "NAME",
-            f"{config['ALG_NAME']}_{config['ENV_NAME']}_pool_{pool_size}_steps_{config['TOTAL_TIMESTEPS']:.0e}",
+            f"{config['ALG_NAME']}_{config['ENV_NAME']}_steps_{config['TOTAL_TIMESTEPS']:.0e}",
         ),
         config=config,
         mode=config["WANDB_MODE"],
@@ -478,7 +577,6 @@ def single_run(config):
             config["SAVE_PATH"],
             env_name,
             alg_name,
-            f"pool_size_{pool_size}",
             timestamp,
         )
         os.makedirs(save_dir, exist_ok=True)
@@ -601,18 +699,6 @@ def tune(default_config):
             },
             "parameters": {
                 "LR": {"values": [1e-5, 3e-5, 5e-5, 1e-4, 2e-4]},
-                "NUM_ENVS": {"values": [1024]},
-                "NUM_STEPS": {"values": [16, 32, 64]},
-                "LAYER_SIZE": {"values": [256, 512, 1024]},
-                "ACTIVATION": {"values": ["tanh"]},
-                "GAMMA": {"values": [0.97, 0.99, 0.995]},
-                "GAE_LAMBDA": {"values": [0.8, 0.9, 0.95]},
-                "CLIP_EPS": {"values": [0.1, 0.2, 0.3]},
-                "ENT_COEF": {"values": [0.01, 0.02, 0.05, 0.08]},
-                "NUM_MINIBATCHES": {"values": [4, 8, 16]},
-                "MAX_GRAD_NORM": {"values": [0.5, 1.0, 1.5]},
-                "VF_COEF": {"values": [0.5, 1.0, 1.5]},
-                "UPDATE_EPOCHS": {"values": [2, 4, 6]},
             },
         }
 

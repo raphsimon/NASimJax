@@ -9,7 +9,7 @@ everything JIT-compatible.
 | Wrapper | Purpose |
 |---------|---------|
 | `AugmentedObservationsWrapper` | Concatenates the current raw observation with an *aggregated* observation that keeps track of everything the agent has ever seen (OR over discrete fields, max over access levels). Useful for partially observable training. |
-| `NormalizeRewardWrapper` | Rescales rewards to a bounded range, typically using `state.max_possible_reward`. |
+| `NormalizeRewardWrapper` | Rescales rewards to a bounded range, using `state.max_possible_reward`, an approximation for the max. attainable reward during an epside for the genereated network instance. |
 | `LogWrapper` | Adds per-episode logging statistics (return, length, ...) to `info`. |
 | `AutoReplayWrapper` | Stores the initial `key`/`level` so an episode can be replayed deterministically. |
 | `AutoResetWrapper` | Standalone auto-reset, used when the base environment's built-in auto-reset is disabled. |

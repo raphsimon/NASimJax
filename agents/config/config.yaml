@@ -9,7 +9,7 @@ NUM_TRIALS: 150
 # wandb params
 WANDB_MODE: "online"  # set to online to activate wandb
 ENTITY: ""
-PROJECT: "NASimJAX"
+PROJECT: "NASimJax"
 alg:
   WANDB_LOG_ALL_SEEDS: False # will log all the vmapped seeds separetely
 

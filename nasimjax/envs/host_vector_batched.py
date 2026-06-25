@@ -99,7 +99,6 @@ def set_access(
 ) -> HostVectorBatched:
     """Set access level for host at given index."""
     # Create new access level one-hot encoding
-    # TODO: Add bound checking
     new_access = jnp.zeros_like(hosts.access_level[host_idx])
     new_access = new_access.at[access_level].set(1)
     hosts = hosts.replace(access_level=hosts.access_level.at[host_idx].set(new_access))

@@ -1,3 +1,17 @@
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is derived from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/host.py.
+#
+# In NASim, the starting position of the attacker, the Internet, is
+# only symbilcally present in the environment. In NASimJax, the Internet 
+# is explicitly represented as a host in the environment. This is done to 
+# allow more felxible starting positions for the attacker, and to allow 
+# for more complex network topologies. The explicit representation is
+# also required for the pure JAX transition function.
+
 class Host:
     """A single host in the network.
 

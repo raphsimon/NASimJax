@@ -1,4 +1,4 @@
-site_name: NASimJAX
+site_name: NASimJax
 site_url: http://localhost:8000
 
 theme:
@@ -67,14 +67,12 @@ nav:
       - Base interface: envs/environment_base.md
       - State & params: envs/common.md
       - NASimEnvJAX: envs/environment.md
-      - GeneratedNASimEnvJAX: envs/generated_environment.md
+      - ProcGenNASimJaxEnv: envs/generated_environment.md
       - Host vector: envs/host_vector_batched.md
       - Actions: envs/action.md
       - Transition logic: envs/transition_logic.md
       - Observations: envs/observation_function.md
       - Network generator: envs/network_generator.md
-      - Env pool: envs/gen_env_pool.md
-      - Level mutators: envs/mutators.md
       - Wrappers: envs/wrappers.md
       - Renderer: envs/renderer.md
       - Utilities: envs/utils.md

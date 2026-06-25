@@ -1,3 +1,10 @@
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is included unmodified from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/utils.py.
+
 import os
 import yaml
 import os.path as osp
@@ -73,7 +80,7 @@ def load_yaml(file_path):
     Raises
     ------
     Exception
-        if theres an issue loading file. """
+        if theres an issue loading file."""
     with open(file_path) as fin:
         content = yaml.load(fin, Loader=yaml.FullLoader)
     return content

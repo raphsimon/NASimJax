@@ -1,5 +1,5 @@
 """
-Utility functions and classes used throughout the NASimJAX implementation.
+Utility functions and classes used throughout the NASimJax implementation.
 """
 
 import enum

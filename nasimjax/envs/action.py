@@ -56,9 +56,10 @@ class ActionResult:
     os_discovered: jnp.ndarray = None
     processes_discovered: jnp.ndarray = None
     access_gained: int = AccessLevel.NONE
-    # Host discovery arrays (required for observation generation) # TODO check whether we *really* need them.
     hosts_discovered: jnp.ndarray = None  # All hosts discovered in this action
-    newly_discovered: jnp.ndarray = None  # Hosts discovered for the first time
+    newly_discovered: jnp.ndarray = (
+        None  # Hosts discovered for the first time, used for reward calculation
+    )
     discovered: jnp.ndarray = (
         None  # Alternative name for hosts_discovered (compatibility)
     )

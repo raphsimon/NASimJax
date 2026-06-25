@@ -11,7 +11,6 @@ ENV_KWARGS:
   sensitive_density: 0.2
   distribute_homogeneous: True
   step_limit: 300
-  env_pool_size: 5000
   scan_cost: 1
   exploit_cost: 3
   privesc_cost: 3

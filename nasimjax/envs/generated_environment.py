@@ -47,7 +47,7 @@ class Level:
     num_sensitive_hosts: int
 
 
-class GeneratedNASimEnvJAX(Environment[NASimJaxEnvState, NASimJaxEnvParams]):
+class ProcGenNASimJaxEnv(Environment[NASimJaxEnvState, NASimJaxEnvParams]):
     """JAX-compatible NASim environment.
 
     This environment implements the Gymnax interface and follows functional
@@ -321,13 +321,10 @@ class GeneratedNASimEnvJAX(Environment[NASimJaxEnvState, NASimJaxEnvParams]):
         Converts each hosts binary feature vector into an integer.
         Useful if you want one integer per host to track per-host changes.
         """
-        # print("Flattened:", flattened)
         bits = jnp.rint(flattened).astype(jnp.uint64)
-        # print("Bits:", bits)
         powers = 1 << jnp.arange(
             bits.shape[0], dtype=jnp.uint64
         )  # [1, 2, 4, ..., 2^(n-1)]
-        # print("Powers", powers)
         return jnp.sum(bits * powers, axis=-1)  # shape: (N,)
 
     def _check_goal_completion(self, hosts: HostVectorBatched) -> jnp.ndarray:

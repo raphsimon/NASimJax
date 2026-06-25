@@ -1,3 +1,37 @@
+# Copyright 2023 Chris Lu (PureJaxRL).
+# Copyright 2024 Samuel Coward, Michael Beukman, Jakob Foerster (JaxUED authors).
+# Portions Copyright (c) 2026 The NASimJax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# This file aggregates wrapper utilities of mixed provenance:
+#
+#   Derived from PureJaxRL (https://github.com/luchris429/purejaxrl)
+#   at commit 5343613, file purejaxrl/wrappers.py:
+#     - GymnaxWrapper            (included unmodified)
+#     - LogEnvState              (included unmodified)
+#     - LogWrapper               (modified: added reset_to_level method to
+#                                 integrate with the JaxUED-style level API)
+#
+#   Derived from JaxUED (https://github.com/DramaCow/jaxued) at commit 0f8f128,
+#   file src/jaxued/wrappers.py:
+#     - AutoReplayState, AutoReplayWrapper  (included unmodified)
+#     - AutoResetState, AutoResetWrapper    (included unmodified)
+#
+#   Original to this repository (contributed under Apache-2.0 within this file):
+#     - AugmentedObservationsWrapper
+#     - NormalizeRewardWrapper
+
 import jax
 import jax.numpy as jnp
 import chex
@@ -166,8 +200,9 @@ class AugmentedObservationsWrapper(GymnaxWrapper):
 
 class NormalizeRewardWrapper(GymnaxWrapper):
     """
-    Symlog (symmetric log) transformation for UED environments.
-    It preserves sign and relative magnitudes while compressing large reward values.
+    The episodic reward is normalized by the maximum possible reward for the level.
+    Prerequisite for PLR-based methods, to calculte the right regret. Using the
+    unnormalized reward would lead to replaying levels with many sensitive hosts.
     """
 
     def __init__(self, env):

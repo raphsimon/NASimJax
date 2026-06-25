@@ -1,0 +1,5 @@
+ENV_NAME: "NASimJax-small-honeypot"
+ENV_KWARGS:
+AUG_OBS: True
+FULLY_OBS: False
+NORMALIZE_REWARD: True

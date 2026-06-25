@@ -1,3 +1,17 @@
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is derived from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/scenario.py.
+#
+# In NASim, the starting position of the attacker, the Internet, is
+# only symbilcally present in the environment. In NASimJax, the Internet
+# is explicitly represented as a host in the environment. This is done to
+# allow more felxible starting positions for the attacker, and to allow
+# for more complex network topologies. The explicit representation is
+# also required for the pure JAX transition function.
+
 import math
 from pprint import pprint
 
@@ -175,24 +189,6 @@ class Scenario:
         return self.scenario_dict.get(
             u.ADDRESS_SPACE_BOUNDS, (len(self.subnets), max(self.subnets))
         )
-
-    @property
-    def host_value_bounds(
-        self,
-    ):  # TODO I think this has become irrelevant, remove if true
-        """The min and max values of host in scenario
-
-        Returns
-        -------
-        (float, float)
-            (min, max) tuple of host values
-        """
-        min_value = math.inf
-        max_value = -math.inf
-        for host in self.hosts.values():
-            min_value = min(min_value, host.sensitive)
-            max_value = max(max_value, host.sensii)
-        return (min_value, max_value)
 
     @property
     def host_discovery_value_bounds(self):

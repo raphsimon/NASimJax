@@ -1,6 +1,11 @@
-import os.path as osp
+# Copyright (c) 2018 Jonathon Schwartz (NASim).
+# Licensed under the MIT License. See LICENSE-NASIM in the project root.
+#
+# This file is included unmodified from NASim
+# (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,
+# file nasim/scenarios/benchmark/__init__.py.
 
-from nasimjax.scenarios.benchmark.generated import AVAIL_GEN_BENCHMARKS
+import os.path as osp
 
 BENCHMARK_DIR = osp.dirname(osp.abspath(__file__))
 
@@ -60,7 +65,3 @@ AVAIL_STATIC_BENCHMARKS = {
         "max_score": 190,
     },
 }
-
-AVAIL_BENCHMARKS = list(AVAIL_STATIC_BENCHMARKS.keys()) + list(
-    AVAIL_GEN_BENCHMARKS.keys()
-)

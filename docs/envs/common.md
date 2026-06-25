@@ -1,7 +1,7 @@
 # `common.py` — State and parameters
 
 Defines the two Flax dataclasses carried through every JIT boundary in
-NASimJAX.
+NASimJax.
 
 `NASimJaxEnvState` holds the mutable state of an episode: the batched host
 vector, the last observation, the step counter, the `done` flag, the

@@ -1,6 +1,6 @@
 # `action.py` — Action system
 
-NASimJAX encodes every possible action as a row in a pre-computed set of JAX
+NASimJax encodes every possible action as a row in a pre-computed set of JAX
 arrays. A discrete agent action is just an integer index into those arrays,
 which is decoded at JIT-time into an `ActionData` struct. This keeps the hot
 path side-effect-free and branch-friendly.
@@ -27,7 +27,7 @@ Each action carries a `cost`, a success `prob` and a required access level
   (used by [`NASimEnvJAX`](environment.md)).
 - `GeneratedFlatActionSpaceJAX` builds the enumeration from raw shape
   parameters (`num_hosts`, `num_services`, `num_processes`, `num_os`) for
-  [`GeneratedNASimEnvJAX`](generated_environment.md).
+  [`ProcGenNASimJaxEnv`](generated_environment.md).
 
 `get_action_from_arrays` is the JIT-compatible lookup used in `step_env` to
 turn an integer action into an `ActionData`.

@@ -103,7 +103,7 @@ class NASimEnvJAX(Environment[NASimJaxEnvState, NASimJaxEnvParams]):
 
         # TODO: Here we always assume that the first host is the starting host and the
         # second the one that is reachable next. This might not always be the case.
-        # We should adapt this to the scenario definition.
+        # This should adapt this to the scenario definition.
         # Set initial host attributes. Sicne it's the attacker's machine, he controls it.
         self._initial_hosts = set_reachable(
             hosts=self._initial_hosts, host_idx=0, value=True
@@ -304,13 +304,10 @@ class NASimEnvJAX(Environment[NASimJaxEnvState, NASimJaxEnvParams]):
         Converts each hosts binary feature vector into an integer.
         Useful if you want one integer per host to track per-host changes.
         """
-        # print("Flattened:", flattened)
         bits = jnp.rint(flattened).astype(jnp.uint64)
-        # print("Bits:", bits)
         powers = 1 << jnp.arange(
             bits.shape[0], dtype=jnp.uint64
         )  # [1, 2, 4, ..., 2^(n-1)]
-        # print("Powers", powers)
         return jnp.sum(bits * powers, axis=-1)  # shape: (N,)
 
     def _check_goal_completion(self, hosts: HostVectorBatched) -> jnp.ndarray:

@@ -1,6 +1,6 @@
 # `environment_base.py` — Gymnax interface
 
-Defines the abstract `Environment` class that all NASimJAX environments
+Defines the abstract `Environment` class that all NASimJax environments
 inherit from. It mirrors the [Gymnax](https://github.com/RobertTLange/gymnax)
 interface so that any code accepting a Gymnax environment can be reused.
 

@@ -1,11 +1,12 @@
-# `generated_environment.py` — `GeneratedNASimEnvJAX`
+# `generated_environment.py` — `ProcGenNASimJaxEnv`
 
-`GeneratedNASimEnvJAX` is the procedurally generated counterpart of
+`ProcGenNASimJaxEnv` is the procedurally generated counterpart of
 [`NASimEnvJAX`](environment.md). Instead of loading a fixed scenario, it
-samples networks from a [`GenEnvPool`](gen_env_pool.md) buffer, so every
-`reset` yields a different topology drawn from the same distribution. This
-makes the environment directly usable for training with unsupervised
-environment design (UED) libraries such as JaxUED.
+samples a fresh network from the configured distribution on every `reset`
+via [`make_level_generator`](network_generator.md), so each episode begins
+on a different topology drawn from the same distribution. This makes the
+environment directly usable for training with unsupervised environment
+design (UED) libraries such as JaxUED.
 
 A `Level` is a frozen, JIT-friendly description of a generated network —
 accepted by `reset_env_to_level` to deterministically restart an episode
@@ -30,4 +31,4 @@ during training.
 
 ::: nasimjax.envs.generated_environment.Level
 
-::: nasimjax.envs.generated_environment.GeneratedNASimEnvJAX
+::: nasimjax.envs.generated_environment.ProcGenNASimJaxEnv

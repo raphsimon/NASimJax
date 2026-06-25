@@ -1,3 +1,10 @@
+  # Copyright (c) 2018 Jonathon Schwartz (NASim).                                         
+  # Licensed under the MIT License. See LICENSE-NASIM in the project root.                  
+  #
+  # This file is included unmodified from NASim                                             
+  # (https://github.com/Jjschwartz/NetworkAttackSimulator) at commit 4f26de3,              
+  # file nasim/scenarios/__init__.py.    
+
 from nasimjax.scenarios.loader import ScenarioLoader
 import nasimjax.scenarios.benchmark as benchmark
 
@@ -51,8 +58,6 @@ def load_scenario(path, name=None):
 
 
 def get_scenario_max(scenario_name):
-    if scenario_name in benchmark.AVAIL_GEN_BENCHMARKS:
-        return benchmark.AVAIL_GEN_BENCHMARKS[scenario_name]["max_score"]
-    elif scenario_name in benchmark.AVAIL_STATIC_BENCHMARKS:
+    if scenario_name in benchmark.AVAIL_STATIC_BENCHMARKS:
         return benchmark.AVAIL_STATIC_BENCHMARKS[scenario_name]["max_score"]
     return None
