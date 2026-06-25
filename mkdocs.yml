@@ -1,0 +1,80 @@
+site_name: NASimJAX
+site_url: http://localhost:8000
+
+theme:
+  name: readthedocs
+  palette:
+    # Dark Mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Dark mode
+      primary: green
+      accent: deep purple
+
+    # Light Mode
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Light mode
+      primary: blue
+      accent: deep orange
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            filters: ["!^_"]
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Envs:
+      - Overview: envs/overview.md
+      - Base interface: envs/environment_base.md
+      - State & params: envs/common.md
+      - NASimEnvJAX: envs/environment.md
+      - GeneratedNASimEnvJAX: envs/generated_environment.md
+      - Host vector: envs/host_vector_batched.md
+      - Actions: envs/action.md
+      - Transition logic: envs/transition_logic.md
+      - Observations: envs/observation_function.md
+      - Network generator: envs/network_generator.md
+      - Env pool: envs/gen_env_pool.md
+      - Level mutators: envs/mutators.md
+      - Wrappers: envs/wrappers.md
+      - Renderer: envs/renderer.md
+      - Utilities: envs/utils.md

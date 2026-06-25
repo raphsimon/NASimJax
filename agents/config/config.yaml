@@ -1,0 +1,18 @@
+# experiment params
+NUM_SEEDS: 5
+SEED: 30
+
+# if  hyperparameters tuning
+HYP_TUNE: False
+NUM_TRIALS: 150
+
+# wandb params
+WANDB_MODE: "online"  # set to online to activate wandb
+ENTITY: ""
+PROJECT: "NASimJAX"
+alg:
+  WANDB_LOG_ALL_SEEDS: False # will log all the vmapped seeds separetely
+
+# where to save the params (if None, will not save)
+SAVE_PATH: "./policies"
+SAVE_METRICS: True

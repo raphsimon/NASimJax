@@ -1,0 +1,67 @@
+[tool.ruff]
+line-length = 88  # same default as Black
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nasimjax"
+dynamic = ["version"]
+description = "GPU-accelerated JAX framework for reinforcement learning research in penetration testing."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = {text = "MIT"}
+authors = [
+    {name = "Anon", email = "anon@example.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "gymnasium>=0.26",
+    "numpy<2.0.0",
+    "networkx>=2.4",
+    "matplotlib>=3.1",
+    "pyyaml>=5.3",
+    "prettytable>=0.7",
+    "safetensors>=0.4.2",
+    "orbax-checkpoint==0.5.0",
+    "flax==0.10.7",
+    "gymnax==0.0.9",
+    "wandb==0.24.1",
+    "distrax==0.1.5",
+    "optax==0.2.5",
+    "chex==0.1.90",
+    "flashbax==0.1.3",
+    "plotext",
+    "hydra-core",
+    "mkdocs==1.6.1",
+    "mkdocstrings==1.0.3",
+    "mkdocstrings[python]"
+]
+
+[project.optional-dependencies]
+gpu = ["jax[cuda12]==0.6.2"]
+cpu = ["jax==0.6.2"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["nasimjax*"]
+
+[tool.setuptools.package-data]
+nasimjax = ["scenarios/benchmark/*.yaml"]

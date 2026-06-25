@@ -1,0 +1,13 @@
+score_function: 'MaxMC' # choices=["MaxMC", "pvl"]
+exploratory_grad_updates: True # False means we use Robust PLR
+level_buffer_capacity: 4000
+replay_prob: 0.8
+staleness_coeff: 0.3
+temperature: 0.3
+topk_k: 4
+minimum_fill_ratio: 0.5
+prioritization: 'rank'
+buffer_duplicate_check: False
+use_accel: False
+num_edits: 10
+accel_mutation: 'combined'

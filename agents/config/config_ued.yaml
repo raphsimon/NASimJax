@@ -1,0 +1,23 @@
+# experiment params
+NUM_SEEDS: 4
+SEED: 0
+MODE: "train" # eval is also possible
+CHECKPOINT_DIRECTORY: "checkpoints"
+CHECKPOINT_TO_EVAL: -1
+CHECKPOINT_SAVE_INTERVAL: 2
+MAX_NUMBER_OF_CHECKPOINTS: 60
+EVAL_FREQ: 250
+EVAL_NUM_ATTEMPTS: 10
+NUM_EVAL_LEVELS: 30
+
+# if  hyperparameters tuning
+HYP_TUNE: False
+NUM_TRIALS: 150
+SWEEP_ID: null
+EARLY_TERMINATE_MIN_ITER: 10
+
+# wandb params
+WANDB_MODE: "disabled"  # set to online to activate wandb
+ENTITY: ""
+PROJECT: "NASimJAX"
+RUN_NAME: null

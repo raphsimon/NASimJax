@@ -1,0 +1,26 @@
+ENV_NAME: "40-hosts-gen"
+ENV_KWARGS:
+  num_hosts: 40
+  num_processes: 3
+  num_services: 3
+  num_os: 2
+  num_subnets: 16
+  topology_density: 0.09
+  service_density: 0.7
+  process_density: 0.7
+  sensitive_density: 0.15
+  distribute_homogeneous: True
+  step_limit: 500
+  env_pool_size: 5000
+  scan_cost: 1
+  exploit_cost: 3
+  privesc_cost: 3
+EVAL_ENV_KWARGS:
+  topology_density: 0.11
+  service_density: 0.5
+  process_density: 0.5
+  sensitive_density: 0.15
+AUG_OBS: True
+FULLY_OBS: False
+NORMALIZE_REWARD: True
+eval_topology_densities: [0.03, 0.06, 0.09, 0.12, 0.15]
