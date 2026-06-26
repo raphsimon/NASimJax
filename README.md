@@ -84,7 +84,7 @@ NASimJax is a research repository and is **not currently distributed via PyPI**.
 
 ```bash
 # We recommend Python 3.12.4
-git clone <this-repository>
+git clone https://github.com/raphsimon/NASimJax.git
 cd NASimJax
 python3 -m venv .venv && source .venv/bin/activate  # optional, but highly recommended
 pip install -e ".[gpu]"
