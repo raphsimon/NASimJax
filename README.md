@@ -201,9 +201,12 @@ If you use NASimJax in your research, please cite:
 
 ```bibtex
 @article{simon2026nasimjax,
-    author  = {Simon, Raphael and Carrasquel, Jos\'e and Mees, Wim and Libin, Pieter},
-    title   = {{NASimJax}: {GPU}-Accelerated Policy Learning Framework for Penetration Testing},
-    journal = {arXiv preprint arXiv:2603.19864},
-    year    = {2026}
+      title={NASimJax: A GPU-Accelerated Policy Learning Framework for Penetration Testing}, 
+      author={Raphael Simon and José Carrasquel and Wim Mees and Pieter Libin},
+      year={2026},
+      eprint={2603.19864},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2603.19864}, 
 }
 ```
