@@ -80,17 +80,23 @@ benchmark scenarios lives in `agents/ppo.py`.
 
 ## ⬇️ Installation
 
-NASimJax is a research repository and is **not currently distributed via PyPI**. It is a GPU-accelerated framework, so a CUDA-capable NVIDIA GPU is assumed. Install from source:
+NASimJax is distributed via PyPI, but the `agents/` examples are not part of 
+the distribution. Cloning the repository is required to successfully run them.
+It is a GPU-accelerated framework, so a CUDA-capable NVIDIA GPU is assumed. 
 
+Install from PyPI:
+```bash
+pip install nasimjax
+```
+
+Install from source:
 ```bash
 # We recommend Python 3.12.4
 git clone https://github.com/raphsimon/NASimJax.git
 cd NASimJax
 python3 -m venv .venv && source .venv/bin/activate  # optional, but highly recommended
-pip install -e ".[gpu]"
+pip install -e .
 ```
-
-The `gpu` extra pulls in the pinned `jax[cuda12]==0.6.2` wheel. NASimJax was developed and tested with `jax==0.6.2`; the throughput comparison reported in the paper was run on an NVIDIA RTX A4000.
 
 ### Verify the install
 
@@ -107,7 +113,7 @@ For scenarios ported over from NASim, run PPO without action masking:
 # Short PPO run on the backward-compatible "small" benchmark from NASim (~1e7 steps)
 python -m agents.ppo +envs=small +alg=ppo alg.TOTAL_TIMESTEPS=1e7
 ```
-*Masking is currently not compatible with these old scenarios, as the action space is specific to every defined scenario.*
+**Attention:** *Masking is currently not compatible with these old scenarios, as the action space is specific to every defined scenario.*
 
 ---
 
