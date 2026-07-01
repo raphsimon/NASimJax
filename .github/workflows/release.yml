@@ -1,0 +1,38 @@
+name: Publish to PyPI
+
+# Run whenever a tag starting with "v" is pushed (e.g. v0.1.0).
+# workflow_dispatch also allows manual triggering from the Actions tab.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build the distributions
+        run: python -m build
+
+      - name: Check the metadata
+        run: twine check dist/*
+
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
