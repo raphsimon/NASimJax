@@ -107,16 +107,12 @@ class Transition(NamedTuple):
     info: jnp.ndarray
 
 
-def make_train(config):
-    config["NUM_UPDATES"] = (
-        config["TOTAL_TIMESTEPS"] // config["NUM_STEPS"] // config["NUM_ENVS"]
-    )
-    jax.debug.print("Number of updates to perform {x}", x=config["NUM_UPDATES"])
-    config["MINIBATCH_SIZE"] = (
-        config["NUM_ENVS"] * config["NUM_STEPS"] // config["NUM_MINIBATCHES"]
-    )
+def make_env(config):
+    """Build the (wrapped) environment and its params from a run config.
 
-    # SETUP ENVIRONMENT
+    Shared by training and by the scripts in `agents/viewing`, so that a saved
+    policy is always evaluated on the environment it was trained on.
+    """
     if "gen" in config["ENV_NAME"].lower():
         train_env_params = NASimJaxEnvParams(
             fully_obs=config["FULLY_OBS"],
@@ -155,6 +151,20 @@ def make_train(config):
     else:
         basic_env, env_params = gymnax.make(config["ENV_NAME"])
 
+    return basic_env, env_params
+
+
+def make_train(config):
+    config["NUM_UPDATES"] = (
+        config["TOTAL_TIMESTEPS"] // config["NUM_STEPS"] // config["NUM_ENVS"]
+    )
+    jax.debug.print("Number of updates to perform {x}", x=config["NUM_UPDATES"])
+    config["MINIBATCH_SIZE"] = (
+        config["NUM_ENVS"] * config["NUM_STEPS"] // config["NUM_MINIBATCHES"]
+    )
+
+    # SETUP ENVIRONMENT
+    basic_env, env_params = make_env(config)
     env = LogWrapper(basic_env)
 
     def linear_schedule(count):

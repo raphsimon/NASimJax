@@ -170,16 +170,46 @@ class Transition(NamedTuple):
     encoded_action_mask: jnp.ndarray
 
 
-def make_train(config):
-    config["NUM_UPDATES"] = (
-        config["TOTAL_TIMESTEPS"] // config["NUM_STEPS"] // config["NUM_ENVS"]
-    )
-    jax.debug.print("Number of updates to perform {x}", x=config["NUM_UPDATES"])
-    config["MINIBATCH_SIZE"] = (
-        config["NUM_ENVS"] * config["NUM_STEPS"] // config["NUM_MINIBATCHES"]
-    )
+def get_inner_state(state):
+    """Recursively unwrap the environment state until we hit the base NASimJax state."""
+    s = state
+    while not hasattr(s, "hosts"):
+        s = s.env_state
+    return s
 
-    # SETUP ENVIRONMENT
+
+def compute_action_mask(state):
+    """Flat boolean action mask (num_hosts * actions_per_host,) for a single state.
+
+    Shared by training and by `agents/viewing`, so a saved policy is evaluated
+    under exactly the mask it was trained with.
+    """
+    inner = get_inner_state(state)
+
+    host_os = inner.hosts.os
+    host_services = inner.hosts.services
+    host_processes = inner.hosts.processes
+
+    host_mask = jnp.logical_and(inner.hosts.reachable, inner.hosts.discovered)
+
+    H = host_os.shape[0]
+
+    exploit = (host_services[:, :, None] * host_os[:, None, :]).reshape(H, -1)
+    privesc = (host_processes[:, :, None] * host_os[:, None, :]).reshape(H, -1)
+
+    global_actions = jnp.ones((H, 4), dtype=exploit.dtype)
+
+    action_mask = jnp.concatenate([global_actions, exploit, privesc], axis=1)
+    action_mask = action_mask * host_mask[:, None]
+    return action_mask.flatten()
+
+
+def make_env(config):
+    """Build the (wrapped) environment and its params from a run config.
+
+    Shared by training and by the scripts in `agents/viewing`, so that a saved
+    policy is always evaluated on the environment it was trained on.
+    """
     if "gen" in config["ENV_NAME"].lower():
         train_env_params = NASimJaxEnvParams(
             fully_obs=config["FULLY_OBS"],
@@ -215,37 +245,25 @@ def make_train(config):
     else:
         basic_env, env_params = gymnax.make(config["ENV_NAME"])
 
+    return basic_env, env_params
+
+
+def make_train(config):
+    config["NUM_UPDATES"] = (
+        config["TOTAL_TIMESTEPS"] // config["NUM_STEPS"] // config["NUM_ENVS"]
+    )
+    jax.debug.print("Number of updates to perform {x}", x=config["NUM_UPDATES"])
+    config["MINIBATCH_SIZE"] = (
+        config["NUM_ENVS"] * config["NUM_STEPS"] // config["NUM_MINIBATCHES"]
+    )
+
+    # SETUP ENVIRONMENT
+    basic_env, env_params = make_env(config)
     env = LogWrapper(basic_env)
     mask_encoder = MaskEncoder(total_actions=env.action_space(env_params).n)
 
-    def get_inner_state(state):
-        """Recursively unwrap the environment state until we hit the base NASimJax state."""
-        s = state
-        while not hasattr(s, "hosts"):
-            s = s.env_state
-        return s
-
     def get_action_mask(state):
-        # Use the helper to safely unwrap regardless of which env passed the state
-        inner = get_inner_state(state)
-
-        host_os = inner.hosts.os
-        host_services = inner.hosts.services
-        host_processes = inner.hosts.processes
-
-        host_mask = jnp.logical_and(inner.hosts.reachable, inner.hosts.discovered)
-
-        H = host_os.shape[0]
-
-        exploit = (host_services[:, :, None] * host_os[:, None, :]).reshape(H, -1)
-        privesc = (host_processes[:, :, None] * host_os[:, None, :]).reshape(H, -1)
-
-        global_actions = jnp.ones((H, 4), dtype=exploit.dtype)
-
-        action_mask = jnp.concatenate([global_actions, exploit, privesc], axis=1)
-        action_mask = action_mask * host_mask[:, None]
-        action_mask = action_mask.flatten()
-
+        action_mask = compute_action_mask(state)
         encoded_action_mask = mask_encoder.encode(action_mask)
         return action_mask, encoded_action_mask
 
