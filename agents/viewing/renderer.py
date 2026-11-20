@@ -1,3 +1,5 @@
+# Copyright (c) 2026 The NASimJax Authors.
+# Licensed under the MIT License. See LICENSE in the project root.
 """
 This file should contain all the rendering functionality. It's a class
 that shall be given a state or an observation, and render it accordingly.
@@ -15,10 +17,34 @@ from nasimjax.envs.host_vector_batched import (
     reconstruct_host_vector_from_flat,
 )
 
+AUX_INFO_FLAGS = 4  # success, connection, permission, undefined error
+
 
 class Renderer:
-    def __init__(self, scenario=None):
+    def __init__(self, scenario=None, augmented=False):
+        """
+        Parameters
+        ----------
+        scenario : optional
+            Scenario definition, used to print OS/service/process names.
+        augmented : bool
+            True if observations come from `AugmentedObservationsWrapper`, whose
+            layout is ``[raw hosts | aux | aggregated hosts]`` instead of
+            ``[hosts | aux]`` (aux = last-action one-hot + error flags).
+        """
         self.scenario = scenario
+        self.augmented = augmented
+
+    def _split_obs(self, obs_array):
+        """Split an observation into (raw_hosts, aggregated_hosts | None, aux)."""
+        aux_size = len(ActionType) + AUX_INFO_FLAGS
+        if self.augmented:
+            host_size = (obs_array.shape[0] - aux_size) // 2
+            raw = obs_array[:host_size]
+            aux = obs_array[host_size : host_size + aux_size]
+            agg = obs_array[host_size + aux_size :]
+            return raw, agg, aux
+        return obs_array[:-aux_size], None, obs_array[-aux_size:]
 
     def render_state(self, mode="human", state=None, obs_array=None):
         """Render state for debugging purposes.
@@ -45,17 +71,9 @@ class Renderer:
 
         if mode in ("human", "ansi"):
             if obs_array is not None:
-                # Extract auxiliary information (last 4 elements)
-                aux_info = obs_array[-4:]
-                success = bool(aux_info[0] > 0.5)
-                connection_error = bool(aux_info[1] > 0.5)
-                permission_error = bool(aux_info[2] > 0.5)
-                undefined_error = bool(aux_info[3] > 0.5)
-
-                # Render auxiliary info table first
-                self._render_auxiliary_info(
-                    success, connection_error, permission_error, undefined_error
-                )
+                _, _, aux = self._split_obs(obs_array)
+                flags = [bool(f > 0.5) for f in aux[-AUX_INFO_FLAGS:]]
+                self._render_auxiliary_info(*flags)
 
             return self._render_readable_state(state.hosts)
         else:
@@ -237,24 +255,25 @@ class Renderer:
     ):
         """Render observation from raw array by reconstructing hosts structure.
 
+        Prints the auxiliary-info table once, then the observed hosts. For
+        augmented observations a second table with the aggregated knowledge is
+        printed as well.
+
         Args:
             obs_array: Complete observation array from environment
+            state: State, used as a template for the host array shapes
             title: Title for the rendered output
         """
-        # Extract auxiliary information (last 4 elements)
-        aux_info = obs_array[-4:]
-        success = bool(aux_info[0] > 0.5)
-        connection_error = bool(aux_info[1] > 0.5)
-        permission_error = bool(aux_info[2] > 0.5)
-        undefined_error = bool(aux_info[3] > 0.5)
+        raw, agg, aux = self._split_obs(obs_array)
 
-        # Render auxiliary info table first
-        self._render_auxiliary_info(
-            success, connection_error, permission_error, undefined_error
+        self._render_auxiliary_info(*[bool(f > 0.5) for f in aux[-AUX_INFO_FLAGS:]])
+
+        self._render_readable_state(
+            reconstruct_host_vector_from_flat(raw, state.hosts),
+            title=f"{title} (last step)" if agg is not None else title,
         )
-
-        host_data = obs_array[: -(len(ActionType) + 4)]
-
-        # Then render the host state
-        reconstructed_hosts = reconstruct_host_vector_from_flat(host_data, state.hosts)
-        self._render_readable_state(reconstructed_hosts, title=title)
+        if agg is not None:
+            self._render_readable_state(
+                reconstruct_host_vector_from_flat(agg, state.hosts),
+                title=f"{title} (aggregated knowledge)",
+            )
